@@ -1,4 +1,4 @@
-Typical terraform template with best practices. Includes files below:
+Terraform template to create security groups:
 
 - variable.tf                - Declares the variables for security groups and their rules, as well as input map for VPCs
 - output.tf                  - Outputs security groups and rules
