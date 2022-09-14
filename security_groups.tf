@@ -1,38 +1,7 @@
-#Put everthing together here.
-#
-#This is where we call our child modules 
-#
-#module "<name>" {
-#  source = "<path to module>"
-#  version = "<remote module version. Some reports don't use this>"
-#  providers = "<provider configurations to pass to child>"
-#  count = <number we want>
-#  
-#  #Create multiple instances with map or list
-#  #example with map
-#  for_each = {
-#    <var1> = <val1>
-#    <var2> = <val2>
-#  }
-#  #applying these values
-#  <var1> = each.key
-#  <var2> = each.value
-#  
-#  #example with list
-#  for_each = toset( <input list> )
-#  #How to apply
-#  #each.value is exactly the same
-#  var = each.key
-#
-#  #Can chain for_each between resources
-#  for_each = <resource type>.<name of resource built with for_each>
-#  #apply like below
-#  <var1> = each.value.<parameter>
-#
-#  #create explicit dependancy between entire module and listed targets
-#  depends_on = []
-#}
+#Creates seucrity groups and sets up input for security group rules module
 
+#Typical traffic types we like to set security groups for
+#These will be used with the "traffic_type" selection
 locals{
   traffic_types = {
     "all" = {
@@ -84,7 +53,8 @@ locals{
     }
 
   }
-
+  
+  #Top level configuration for security group
   security_group_config = {
     for item in var.security_groups: 
       item.name => {
@@ -101,6 +71,7 @@ locals{
   }
 }
 
+#We first make all the security groups
 resource "aws_security_group" "security_groups"{
   for_each               = local.security_group_config
   #Set this to null if "name_prefix is defined"
@@ -109,7 +80,7 @@ resource "aws_security_group" "security_groups"{
   vpc_id                 = each.value.vpc_id
   revoke_rules_on_delete = each.value.revoke_rules_on_delete
   description            = each.value.description
-  tags                   = merge({"Name" = item.name}, each.value.tags)
+  tags                   = merge({"Name" = each.key}, each.value.tags)
 }
 
 
@@ -120,42 +91,43 @@ locals{
     for item in var.security_groups: 
       item.name => {
         for rule in item.rules:
-          "egress=${rule.is_egress} ${rule.source_type} rule from port ${rule.to_from_ports[0]} to port ${rule.to_from_ports[1]} by protocol ${rule.protocol} for security group ${item.name}" => {
-            "type"        = lookup(rule.rule_settings,"is_egress",null) == "true" ? "egress" : "ingress" 
-            "description" = lookup(rule.rule_settings,"description",null)
+          format("egress=%s rule %d for security group %s ",lookup(rule,"is_egress","false"),index(item.rules,rule),aws_security_group.security_groups[item.name].id) => {
+            "type"        = lookup(rule,"is_egress",null) == "true" ? "egress" : "ingress" 
+            "description" = lookup(rule,"description",null)
 
             #If we set a traffic_type, we set from_port to those values. If not, we check if the protocol is icmp; if yes, we set this to the ICMP type, if no, we set it to from_port
-            "protocol"  = lookup(rule.rule_settings,"traffic_type",null) != null ? local.traffic_types[rule.rule_settings["traffic_type"]]["protocol"] : rule.rule_settings["protocol"]
-            "from_port" = lookup(rule.rule_settings,"traffic_type",null) != null ? local.traffic_types[rule.rule_settings["traffic_type"]]["from_port"] : (lower(rule.rule_settings["protocol"]) == "icmp" ? rule.rule_settings["icmp_type"] : (lookup(rule.rule_settings,"port",null) != null ? rule.rule_settings["port"] : rule.rule_settings["from_port"] ))
+            "protocol"  = lookup(rule,"traffic_type",null) != null ? local.traffic_types[rule["traffic_type"]]["protocol"] : rule["protocol"]
+            "from_port" = lookup(rule,"traffic_type",null) != null ? local.traffic_types[rule["traffic_type"]]["from_port"] : (lower(rule["protocol"]) == "icmp" ? rule["icmp_type"] : (lookup(rule,"port",null) != null ? rule["port"] : rule["from_port"] ))
 
             #If we set a traffic_type, we set to_port to those values. If not, we check if the protocol is icmp; if yes, we set this to the ICMP code, if no, we set it to "port" if defined, if not, we set to "to_port"
-            "to_port" = lookup(rule.rule_settings,"traffic_type",null) != null ? local.traffic_types[rule.rule_settings["traffic_type"]]["to_port"] : (lower(rule.rule_settings["protocol"]) == "icmp" ? rule.rule_settings["icmp_code"] : (lookup(rule.rule_settings,"port",null) != null ? rule.rule_settings["port"] : rule.rule_settings["to_port"] ))
+            "to_port" = lookup(rule,"traffic_type",null) != null ? local.traffic_types[rule["traffic_type"]]["to_port"] : (lower(rule["protocol"]) == "icmp" ? rule["icmp_code"] : (lookup(rule,"port",null) != null ? rule["port"] : rule["to_port"] ))
  
             #External sources settings
             #Sets to allow access from this security group. Overrides all other settings
-            "self"              = lookup(rule.rule_settings,"self","false") 
+            "self"              = lookup(rule,"self",null) 
             #Sets the list of IPv4 addresses we allow access to. Ignored if "security_groups" or self is set
-            "cidr_blocks"       = lookup(rule.rule_settings,"self","false") == "true" || lookup(rule.rule_settings,"security_groups",null) != null ? null : ( lookup(rule.rule_settings,"cidr_blocks",null) == null ? null : tolist(split(",",rule.rule_settings["cidr_blocks"])) )
+            "cidr_blocks"       = lookup(rule,"self","false") == "true" || lookup(rule,"security_groups",null) != null ? null : lookup(rule,"cidr_blocks",null) 
+
             #Sets the list of IPv6 addresses we allow access to. Ignored if "security_groups" or self is set
-            "ipv6_cidr_blocks"  = lookup(rule.rule_settings,"self","false") == "true" || lookup(rule.rule_settings,"security_groups",null) != null ? null : ( lookup(rule.rule_settings,"ipv6_cidr_blocks",null) == null ? null : tolist(split(",",rule.rule_settings["ipv6_cidr_blocks"])) )
+            "ipv6_cidr_blocks"  = lookup(rule,"self","false") == "true" || lookup(rule,"security_groups",null) != null ? null : lookup(rule,"ipv6_cidr_blocks",null) 
+
             #Sets the list of prefix list ids we allow access to. Ignored if "security_groups" or self is set
-            "prefix_list_ids"   = lookup(rule.rule_settings,"self","false") == "true" || lookup(rule.rule_settings,"security_groups",null) != null ? null : ( lookup(rule.rule_settings,"prefix_list_ids",null) == null ? null : tolist(split(",",rule.rule_settings["prefix_list_ids"])) )
+            "prefix_list_ids"   = lookup(rule,"self","false") == "true" || lookup(rule,"security_groups",null) != null ? null : lookup(rule,"prefix_list_ids",null) 
 
             #If we specify "security_groups" option, we check and see if the security group value is the name of a security groups defined here
             #If not, we assume this is the external ID of a security group
-            "source_security_group_id" = lower(rule.source_type) != "security_group" ? null : (lookup(aws_security_group.security_groups,item.source_value,null) != null ? aws_security_group.security_groups[item.source_value].id : item.source_value) 
-            "source_security_group_id" = lookup(rule.rule_settings,"self","false") == "true" ? null : ( lookup(rule.rule_settings,"security_groups",null) == null ? null : [
-              for security_group in split(rule.rule_settings["security_groups"]):
-                lookup(aws_security_group.security_groups,security_group,null) != null ? aws_security_group.security_groups[security_group].id : security_group
-            ])
+            #Ignored if "self" is set
+            "source_security_group_id" = lookup(rule,"self","false") == "true" ? null : ( lookup(rule,"security_group",null) == null ? null : lookup(aws_security_group.security_groups,rule["security_group"],null) != null ? aws_security_group.security_groups[rule["security_group"]].id : rule["security_group"] )
           }
       }
   }
 }
 
+#Applies the rules to each security group
 module "security_groups_rules"{
   source                 = "./modules/security_group_rules"
   for_each               = local.security_group_rules_config
   security_group_id      = aws_security_group.security_groups[each.key].id
-  security_group_rules   = local.security_group_rules_config[each.key]
+  #security_group_rules   = local.security_group_rules_config[each.key]
+  security_group_rules   = each.value
 }
