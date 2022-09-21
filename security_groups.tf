@@ -128,6 +128,5 @@ module "security_groups_rules"{
   source                 = "./modules/security_group_rules"
   for_each               = local.security_group_rules_config
   security_group_id      = aws_security_group.security_groups[each.key].id
-  #security_group_rules   = local.security_group_rules_config[each.key]
   security_group_rules   = each.value
 }
