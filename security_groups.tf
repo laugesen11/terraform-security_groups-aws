@@ -137,11 +137,11 @@ resource "aws_security_group" "security_groups"{
     for_each = { for name,value in local.security_group_rules_config: name => value if value.type == "ingress" }
     content{
       description              = ingress.value.description
-      to_port                  = ingress.value.
+      to_port                  = ingress.value.to_port
       from_port                = ingress.value.from_port
       protocol                 = ingress.value.protocol
       cidr_blocks              = ingress.value.cidr_blocks
-      ipv6_cidr_blocks         = ingress.value.
+      ipv6_cidr_blocks         = ingress.value.ipv6_cidr_blocks
       prefix_list_ids          = ingress.value.prefix_list_ids
       self                     = ingress.value.self
       source_security_group_id = ingress.value.source_security_group_id
@@ -152,11 +152,11 @@ resource "aws_security_group" "security_groups"{
     for_each = { for name,value in local.security_group_rules_config: name => value if value.type == "egress" }
     content{
       description              = egress.value.description
-      to_port                  = egress.value.
+      to_port                  = egress.value.to_port
       from_port                = egress.value.from_port
       protocol                 = egress.value.protocol
       cidr_blocks              = egress.value.cidr_blocks
-      ipv6_cidr_blocks         = egress.value.
+      ipv6_cidr_blocks         = egress.value.ipv6_cidr_blocks
       prefix_list_ids          = egress.value.prefix_list_ids
       self                     = egress.value.self
       source_security_group_id = egress.value.source_security_group_id
