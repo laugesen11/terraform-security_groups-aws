@@ -106,19 +106,19 @@ locals{
             #Sets to allow access from this security group. Overrides all other settings
             "self"              = lookup(rule,"self",null) 
             #Sets the list of IPv4 addresses we allow access to. Ignored if "security_groups" or self is set
-            "cidr_blocks"       = lookup(rule,"self","false") == "true" || lookup(rule,"security_groups",null) != null ? null : lookup(rule,"cidr_blocks",null) 
+            "cidr_blocks"       = lookup(rule,"self","false") == "true" || lookup(rule,"security_groups",null) != null ? null : (lookup(rule,"cidr_block",null) != null ? split(",",rule["cidr_blocks"]) : null ) 
 
             #Sets the list of IPv6 addresses we allow access to. Ignored if "security_groups" or self is set
-            "ipv6_cidr_blocks"  = lookup(rule,"self","false") == "true" || lookup(rule,"security_groups",null) != null ? null : lookup(rule,"ipv6_cidr_blocks",null) 
+            "ipv6_cidr_blocks"  = lookup(rule,"self","false") == "true" || lookup(rule,"security_groups",null) != null ? null : (lookup(rule,"ipv6_cidr_blocks",null) != null ? split(",",rule["ipv6_cidr_blocks"]) : null ) 
 
             #Sets the list of prefix list ids we allow access to. Ignored if "security_groups" or self is set
-            "prefix_list_ids"   = lookup(rule,"self","false") == "true" || lookup(rule,"security_groups",null) != null ? null : lookup(rule,"prefix_list_ids",null) 
+            "prefix_list_ids"   = lookup(rule,"self","false") == "true" || lookup(rule,"security_groups",null) != null ? null : (lookup(rule,"prefix_list_ids",null) != null ? split(",",rule["ipv6_cidr_blocks"]) : null )
 
             #If we specify "security_groups" option, we check and see if the security group value is the name of a security groups defined here
             #If not, we assume this is the external ID of a security group
             #Ignored if "self" is set
             #"source_security_group_id" = lookup(rule,"self","false") == "true" ? null : ( lookup(rule,"security_group",null) == null ? null : lookup(aws_security_group.security_groups,rule["security_group"],null) != null ? aws_security_group.security_groups[rule["security_group"]].id : rule["security_group"] )
-            "security_groups" = lookup(rule,"self","false") == "true" ? null : ( lookup(rule,"security_group",null) == null ? null : rule["security_group"] )
+            "security_groups" = lookup(rule,"self","false") == "true" ? null : ( lookup(rule,"security_groups",null) == null ? null : split(",",rule["security_groups"]) )
             
           }
       }
@@ -144,9 +144,9 @@ resource "aws_security_group" "security_groups"{
       protocol         = ingress.value.protocol
       cidr_blocks      = ingress.value.cidr_blocks
       ipv6_cidr_blocks = ingress.value.ipv6_cidr_blocks
-      prefix_list_ids  = split(",",ingress.value.prefix_list_ids)
+      prefix_list_ids  = ingress.value.prefix_list_ids
       self             = ingress.value.self
-      security_groups  = [ingress.value.security_groups]
+      security_groups  = ingress.value.security_groups
     }
   }
 
@@ -159,9 +159,9 @@ resource "aws_security_group" "security_groups"{
       protocol         = egress.value.protocol
       cidr_blocks      = egress.value.cidr_blocks
       ipv6_cidr_blocks = egress.value.ipv6_cidr_blocks
-      prefix_list_ids  = split(",",egress.value.prefix_list_ids)
+      prefix_list_ids  = egress.value.prefix_list_ids
       self             = egress.value.self
-      security_groups  = [egress.value.security_groups]
+      security_groups  = egress.value.security_groups
     }
   }
 }
