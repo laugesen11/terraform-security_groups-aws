@@ -136,7 +136,7 @@ resource "aws_security_group" "security_groups"{
   tags                   = merge({"Name" = each.key}, each.value.tags)
 
   dynamic ingress{
-    for_each = { for name,value in local.security_group_rules_config: name => value if value.type == "ingress" }
+    for_each = { for name,value in local.security_group_rules_config[each.key]: name => value if value.type == "ingress" }
     content{
       description      = ingress.value.description
       to_port          = ingress.value.to_port
