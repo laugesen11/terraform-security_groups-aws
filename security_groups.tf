@@ -118,7 +118,7 @@ locals{
             #If not, we assume this is the external ID of a security group
             #Ignored if "self" is set
             #"source_security_group_id" = lookup(rule,"self","false") == "true" ? null : ( lookup(rule,"security_group",null) == null ? null : lookup(aws_security_group.security_groups,rule["security_group"],null) != null ? aws_security_group.security_groups[rule["security_group"]].id : rule["security_group"] )
-            "source_security_group_id" = lookup(rule,"self","false") == "true" ? null : ( lookup(rule,"security_group",null) == null ? null : rule["security_group"] )
+            "security_groups" = lookup(rule,"self","false") == "true" ? null : ( lookup(rule,"security_group",null) == null ? null : rule["security_group"] )
             
           }
       }
@@ -138,30 +138,30 @@ resource "aws_security_group" "security_groups"{
   dynamic ingress{
     for_each = { for name,value in local.security_group_rules_config: name => value if value.type == "ingress" }
     content{
-      description              = ingress.value.description
-      to_port                  = ingress.value.to_port
-      from_port                = ingress.value.from_port
-      protocol                 = ingress.value.protocol
-      cidr_blocks              = ingress.value.cidr_blocks
-      ipv6_cidr_blocks         = ingress.value.ipv6_cidr_blocks
-      prefix_list_ids          = ingress.value.prefix_list_ids
-      self                     = ingress.value.self
-      source_security_group_id = ingress.value.source_security_group_id
+      description      = ingress.value.description
+      to_port          = ingress.value.to_port
+      from_port        = ingress.value.from_port
+      protocol         = ingress.value.protocol
+      cidr_blocks      = ingress.value.cidr_blocks
+      ipv6_cidr_blocks = ingress.value.ipv6_cidr_blocks
+      prefix_list_ids  = ingress.value.prefix_list_ids
+      self             = ingress.value.self
+      security_groups  = ingress.value.security_groups
     }
   }
 
   dynamic egress{
     for_each = { for name,value in local.security_group_rules_config: name => value if value.type == "egress" }
     content{
-      description              = egress.value.description
-      to_port                  = egress.value.to_port
-      from_port                = egress.value.from_port
-      protocol                 = egress.value.protocol
-      cidr_blocks              = egress.value.cidr_blocks
-      ipv6_cidr_blocks         = egress.value.ipv6_cidr_blocks
-      prefix_list_ids          = egress.value.prefix_list_ids
-      self                     = egress.value.self
-      source_security_group_id = egress.value.source_security_group_id
+      description      = egress.value.description
+      to_port          = egress.value.to_port
+      from_port        = egress.value.from_port
+      protocol         = egress.value.protocol
+      cidr_blocks      = egress.value.cidr_blocks
+      ipv6_cidr_blocks = egress.value.ipv6_cidr_blocks
+      prefix_list_ids  = egress.value.prefix_list_ids
+      self             = egress.value.self
+      security_groups  = egress.value.security_groups
     }
   }
 }
