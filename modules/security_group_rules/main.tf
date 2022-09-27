@@ -10,9 +10,6 @@ resource "aws_security_group_rule" "security_group_rules" {
   cidr_blocks              = each.value.cidr_blocks == null ? null : split(",",each.value.cidr_blocks)
   ipv6_cidr_blocks         = each.value.ipv6_cidr_blocks == null ? null : split(",",each.value.ipv6_cidr_blocks) 
   prefix_list_ids          = each.value.prefix_list_ids == null ? null : split(",",each.value.prefix_list_ids)
-#  cidr_blocks              = each.value.cidr_blocks 
-#  ipv6_cidr_blocks         = each.value.ipv6_cidr_blocks 
-#  prefix_list_ids          = each.value.prefix_list_ids 
   self                     = each.value.self
   source_security_group_id = each.value.source_security_group_id 
 }
