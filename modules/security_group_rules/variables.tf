@@ -20,5 +20,5 @@ variable "security_group_rules" {
   #  "self"                     = bool (makes security group reference self). Set to null to turn off
   #  "source_security_group_id" = "<string of security group ID>"
   #}
-  type        = map(string)
+  type        = map
 }
