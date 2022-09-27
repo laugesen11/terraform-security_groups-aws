@@ -72,16 +72,16 @@ locals{
 }
 
 #We first make all the security groups
-resource "aws_security_group" "security_groups"{
-  for_each               = local.security_group_config
-  #Set this to null if "name_prefix is defined"
-  name                   = each.value.name_prefix == null ? each.key : null
-  name_prefix            = each.value.name_prefix
-  vpc_id                 = each.value.vpc_id
-  revoke_rules_on_delete = each.value.revoke_rules_on_delete
-  description            = each.value.description
-  tags                   = merge({"Name" = each.key}, each.value.tags)
-}
+#resource "aws_security_group" "security_groups"{
+#  for_each               = local.security_group_config
+#  #Set this to null if "name_prefix is defined"
+#  name                   = each.value.name_prefix == null ? each.key : null
+#  name_prefix            = each.value.name_prefix
+#  vpc_id                 = each.value.vpc_id
+#  revoke_rules_on_delete = each.value.revoke_rules_on_delete
+#  description            = each.value.description
+#  tags                   = merge({"Name" = each.key}, each.value.tags)
+#}
 
 
 #Sets up the rules for each security group based on list of 'rules' objects in 'security_groups' variable
@@ -123,10 +123,50 @@ locals{
   }
 }
 
-#Applies the rules to each security group
-module "security_groups_rules"{
-  source                 = "./modules/security_group_rules"
-  for_each               = local.security_group_rules_config
-  security_group_id      = aws_security_group.security_groups[each.key].id
-  security_group_rules   = each.value
+resource "aws_security_group" "security_groups"{
+  for_each               = local.security_group_config
+  #Set this to null if "name_prefix is defined"
+  name                   = each.value.name_prefix == null ? each.key : null
+  name_prefix            = each.value.name_prefix
+  vpc_id                 = each.value.vpc_id
+  revoke_rules_on_delete = each.value.revoke_rules_on_delete
+  description            = each.value.description
+  tags                   = merge({"Name" = each.key}, each.value.tags)
+
+  dynamic ingress{
+    for_each = { for name,value in local.security_group_rules_config: name => value if value.type == "ingress" }
+    content{
+      description              = ingress.value.description
+      to_port                  = ingress.value.
+      from_port                = ingress.value.from_port
+      protocol                 = ingress.value.protocol
+      cidr_blocks              = ingress.value.cidr_blocks
+      ipv6_cidr_blocks         = ingress.value.
+      prefix_list_ids          = ingress.value.prefix_list_ids
+      self                     = ingress.value.self
+      source_security_group_id = ingress.value.source_security_group_id
+    }
+  }
+
+  dynamic egress{
+    for_each = { for name,value in local.security_group_rules_config: name => value if value.type == "egress" }
+    content{
+      description              = egress.value.description
+      to_port                  = egress.value.
+      from_port                = egress.value.from_port
+      protocol                 = egress.value.protocol
+      cidr_blocks              = egress.value.cidr_blocks
+      ipv6_cidr_blocks         = egress.value.
+      prefix_list_ids          = egress.value.prefix_list_ids
+      self                     = egress.value.self
+      source_security_group_id = egress.value.source_security_group_id
+    }
+  }
 }
+#Applies the rules to each security group
+#module "security_groups_rules"{
+#  source                 = "./modules/security_group_rules"
+#  for_each               = local.security_group_rules_config
+#  security_group_id      = aws_security_group.security_groups[each.key].id
+#  security_group_rules   = each.value
+#}
