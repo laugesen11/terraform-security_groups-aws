@@ -144,14 +144,14 @@ resource "aws_security_group" "security_groups"{
       protocol         = ingress.value.protocol
       cidr_blocks      = ingress.value.cidr_blocks
       ipv6_cidr_blocks = ingress.value.ipv6_cidr_blocks
-      prefix_list_ids  = ingress.value.prefix_list_ids
+      prefix_list_ids  = split(",",ingress.value.prefix_list_ids)
       self             = ingress.value.self
-      security_groups  = ingress.value.security_groups
+      security_groups  = [ingress.value.security_groups]
     }
   }
 
   dynamic egress{
-    for_each = { for name,value in local.security_group_rules_config: name => value if value.type == "egress" }
+    for_each = { for name,value in local.security_group_rules_config[each.key]: name => value if value.type == "egress" }
     content{
       description      = egress.value.description
       to_port          = egress.value.to_port
@@ -159,9 +159,9 @@ resource "aws_security_group" "security_groups"{
       protocol         = egress.value.protocol
       cidr_blocks      = egress.value.cidr_blocks
       ipv6_cidr_blocks = egress.value.ipv6_cidr_blocks
-      prefix_list_ids  = egress.value.prefix_list_ids
+      prefix_list_ids  = split(",",egress.value.prefix_list_ids)
       self             = egress.value.self
-      security_groups  = egress.value.security_groups
+      security_groups  = [egress.value.security_groups]
     }
   }
 }
