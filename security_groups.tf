@@ -89,7 +89,7 @@ locals{
     for item in var.security_groups: 
       item.name => {
         for rule in item.rules:
-          format("egress=%s rule %d for security group %s ",lookup(rule,"is_egress","false"),index(item.rules,rule),item.name) => {
+          format("egress=%s rule %d for security group %s ",lookup(rule,"is_egress","false"),index(item.rules,rule),aws_security_group.security_groups[item.name].id) => {
             "type"        = lookup(rule,"is_egress",null) == "true" ? "egress" : "ingress" 
             "description" = lookup(rule,"description",null)
 
