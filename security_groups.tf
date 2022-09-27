@@ -104,13 +104,13 @@ locals{
             #Sets to allow access from this security group. Overrides all other settings
             "self"              = lookup(rule,"self",null) 
             #Sets the list of IPv4 addresses we allow access to. Ignored if "security_groups" or self is set
-            "cidr_blocks"       = lookup(rule,"self","false") == "true" || lookup(rule,"security_groups",null) != null ? null : lookup(rule,"cidr_block",null) 
+            "cidr_blocks"       = lookup(rule,"self","false") == "true" || lookup(rule,"security_group",null) != null ? null : lookup(rule,"cidr_block",null) 
 
             #Sets the list of IPv6 addresses we allow access to. Ignored if "security_groups" or self is set
-            "ipv6_cidr_blocks"  = lookup(rule,"self","false") == "true" || lookup(rule,"security_groups",null) != null ? null : lookup(rule,"ipv6_cidr_blocks",null) 
+            "ipv6_cidr_blocks"  = lookup(rule,"self","false") == "true" || lookup(rule,"security_group",null) != null ? null : lookup(rule,"ipv6_cidr_blocks",null) 
 
             #Sets the list of prefix list ids we allow access to. Ignored if "security_groups" or self is set
-            "prefix_list_ids"   = lookup(rule,"self","false") == "true" || lookup(rule,"security_groups",null) != null ? null : lookup(rule,"prefix_list_ids",null) 
+            "prefix_list_ids"   = lookup(rule,"self","false") == "true" || lookup(rule,"security_group",null) != null ? null : lookup(rule,"prefix_list_ids",null) 
 
             #If we specify "security_groups" option, we check and see if the security group value is the name of a security groups defined here
             #If not, we assume this is the external ID of a security group
