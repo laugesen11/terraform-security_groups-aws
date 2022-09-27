@@ -39,7 +39,7 @@ variable "security_groups" {
       #  - "ipv6_cidr_blocks"=<comma separated list of IPv4 CIDR blocks> 
       #  - "prefix_list_ids"=<comma separated list of prefix list ids> 
       # WARNING: "security_groups" will cause "cidr_blocks","ipv6_cidr_blocks", and "prefix_list_ids" to be ignore. 
-      #  - "security_groups"=<comma separated values of security group names or IDs> - can use security group names from this module
+      #  - "security_group"=<comma separated values of security group names or IDs> - can use security group names from this module
       # WARNING:"self" can only be used alone. Setting this will ignore "security_groups", "cidr_blocks","ipv6_cidr_blocks", and "prefix_list_ids"
       #  - "self"=<true|false> - uses this security group as the entity allowed access
       rules                  = list(map(string))
