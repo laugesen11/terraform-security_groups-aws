@@ -117,7 +117,9 @@ locals{
             #If we specify "security_groups" option, we check and see if the security group value is the name of a security groups defined here
             #If not, we assume this is the external ID of a security group
             #Ignored if "self" is set
-            "source_security_group_id" = lookup(rule,"self","false") == "true" ? null : ( lookup(rule,"security_group",null) == null ? null : lookup(aws_security_group.security_groups,rule["security_group"],null) != null ? aws_security_group.security_groups[rule["security_group"]].id : rule["security_group"] )
+            #"source_security_group_id" = lookup(rule,"self","false") == "true" ? null : ( lookup(rule,"security_group",null) == null ? null : lookup(aws_security_group.security_groups,rule["security_group"],null) != null ? aws_security_group.security_groups[rule["security_group"]].id : rule["security_group"] )
+            "source_security_group_id" = lookup(rule,"self","false") == "true" ? null : ( lookup(rule,"security_group",null) == null ? null : rule["security_group"] )
+            
           }
       }
   }
