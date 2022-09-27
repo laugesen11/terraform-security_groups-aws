@@ -104,7 +104,7 @@ locals{
             #Sets to allow access from this security group. Overrides all other settings
             "self"              = lookup(rule,"self",null) 
             #Sets the list of IPv4 addresses we allow access to. Ignored if "security_groups" or self is set
-            "cidr_blocks"       = lookup(rule,"self","false") == "true" || lookup(rule,"security_group",null) != null ? null : lookup(rule,"cidr_block",null) 
+            "cidr_blocks"       = lookup(rule,"self","false") == "true" || lookup(rule,"security_group",null) != null ? null : lookup(rule,"cidr_blocks",null) 
 
             #Sets the list of IPv6 addresses we allow access to. Ignored if "security_groups" or self is set
             "ipv6_cidr_blocks"  = lookup(rule,"self","false") == "true" || lookup(rule,"security_group",null) != null ? null : lookup(rule,"ipv6_cidr_blocks",null) 
